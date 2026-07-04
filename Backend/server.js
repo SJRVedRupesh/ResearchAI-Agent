@@ -1,18 +1,26 @@
-const express = require('express');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+// Import routes
+const healthRoutes = require("./routes/healthRoutes");
+const researchRoutes = require("./routes/researchRoutes");
+
 const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+
+// Register routes
+app.use("/health", healthRoutes);
+app.use("/api/research", researchRoutes);
+
+// Default route
+app.get("/", (req, res) => {
+    res.send("Research AI Agent Backend Running");
+});
+
 const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-    res.send("AI Investment Backend is Running 🚀");
-});
-
-app.get('/api/test', (req, res) => {
-    res.json({
-        message: "Hello from the AI Investment Backend!"
-    });
-});
-
 app.listen(PORT, () => {
-    console.log(`Backend server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
