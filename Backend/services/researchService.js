@@ -1,34 +1,44 @@
+const { getCompanyFinancials } = require("./financialService");
 const { generateInvestmentAnalysis } = require("./geminiService");
 
-const buildPrompt = (companyName) => {
+const buildPrompt = (financialData) => {
     return `
-You are a senior investment analyst.
+You are a professional CFA investment analyst.
 
-Analyze the company "${companyName}".
+Analyze the company using the financial information below.
 
-Evaluate the following:
+Financial Data:
+${JSON.stringify(financialData, null, 2)}
 
-1. Company Overview
-2. Industry
-3. Business Summary
-4. Key Strengths
-5. Key Weaknesses
-6. Major Risks
-7. Growth Opportunities
-8. Investment Recommendation (INVEST / HOLD / PASS)
-9. Confidence Score (0-100)
+Return ONLY valid JSON in this format:
 
-Keep the response professional and concise.
+{
+  "company": "",
+  "industry": "",
+  "summary": "",
+  "strengths": [],
+  "weaknesses": [],
+  "risks": [],
+  "recommendation": "INVEST | HOLD | PASS",
+  "confidence": 0
+}
 `;
 };
 
 const researchCompany = async (companyName) => {
-    const prompt = buildPrompt(companyName);
 
+    // Step 1: Fetch financial data
+    const financialData = await getCompanyFinancials(companyName);
+
+    // Step 2: Build AI prompt
+    const prompt = buildPrompt(financialData);
+
+    // Step 3: Generate AI analysis
     const analysis = await generateInvestmentAnalysis(prompt);
 
+    // Step 4: Return response
     return {
-        company: companyName,
+        financialData,
         analysis
     };
 };
