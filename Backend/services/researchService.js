@@ -8,36 +8,49 @@ const { parseAIResponse } = require("../utils/jsonParser");
 
 const researchCompany = async (companyName) => {
     try {
-        // Step 1: Fetch financial data
-        const financialData = await getCompanyFinancials(companyName);
+        // Fetch financial data and news in parallel
+        const [financialData, companyNews] = await Promise.all([
+            getCompanyFinancials(companyName),
+            getCompanyNews(companyName)
+        ]);
 
-        // Step 2: Fetch latest company news
-        const companyNews = await getCompanyNews(companyName);
+        // Convert data into formatted strings for the prompt
+        const financialContext = JSON.stringify(financialData, null, 2);
+        const newsContext = JSON.stringify(companyNews, null, 2);
 
-        // Step 3: Format the prompt using LangChain PromptTemplate
+        // Generate the prompt
         const formattedPrompt = await researchPrompt.format({
-            financialData: JSON.stringify(financialData, null, 2),
-            news: JSON.stringify(companyNews, null, 2)
+            financialData: financialContext,
+            news: newsContext
         });
 
-        // Step 4: Invoke Gemini through LangChain
+        // Invoke Gemini through LangChain
         const response = await model.invoke(formattedPrompt);
 
-        // Step 5: Get AI response
-        const aiOutput = response.content;
+        // Validate AI response
+        if (!response || !response.content) {
+            throw new Error("No response received from Gemini.");
+        }
 
-        // Step 6: Parse JSON response
-        const analysis = parseAIResponse(aiOutput);
+        // Parse AI JSON response
+        const analysis = parseAIResponse(response.content);
 
-        // Step 7: Return complete response
+        // Return final response
         return {
+            company: companyName,
+            generatedAt: new Date().toISOString(),
             financialData,
             companyNews,
             analysis
         };
 
     } catch (error) {
-        console.error("Research Service Error:", error);
+        console.error("Research Service Error:", {
+            company: companyName,
+            message: error.message,
+            stack: error.stack
+        });
+
         throw error;
     }
 };
