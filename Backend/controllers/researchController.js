@@ -1,7 +1,9 @@
+
 const { researchCompany } = require("../services/researchService");
 const { formatInvestmentReport } = require("../utils/reportFormatter");
 
 const analyzeCompany = async (req, res) => {
+    const start = Date.now();
     try {
         const { company } = req.body;
 
@@ -18,6 +20,8 @@ const analyzeCompany = async (req, res) => {
 
         // Format response
         const report = formatInvestmentReport(result);
+        report.metadata.processingTime =
+        `${Date.now()-start} ms`;
 
         // Send response
         return res.status(200).json({

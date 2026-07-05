@@ -1,37 +1,38 @@
 const { PromptTemplate } = require("@langchain/core/prompts");
 
 const researchPrompt = PromptTemplate.fromTemplate(`
-You are a Senior CFA Investment Analyst.
+You are a CFA Level III Investment Analyst.
 
-Analyze the company using ONLY the information provided below.
+You are preparing a professional investment report.
 
 Financial Data:
+
 {financialData}
 
-Recent News:
+Latest News:
+
 {news}
 
-Return ONLY a valid JSON object.
+Return ONLY valid JSON.
 
-The JSON schema is:
+Schema:
 
 {{
-  "company": "",
-  "industry": "",
   "summary": "",
   "strengths": [],
   "weaknesses": [],
   "risks": [],
-  "recommendation": "INVEST | HOLD | PASS",
-  "confidence": 0
+  "futureOutlook": "",
+  "confidence": 80
 }}
 
 Rules:
-1. Return only JSON.
-2. Do not use markdown.
-3. Do not use \`\`\`json.
-4. Do not add explanations.
-5. Confidence must be an integer between 0 and 100.
+
+1. Return ONLY valid JSON.
+2. No markdown.
+3. No triple backticks.
+4. No explanations.
+5. Confidence must be between 0 and 100.
 `);
 
 module.exports = researchPrompt;

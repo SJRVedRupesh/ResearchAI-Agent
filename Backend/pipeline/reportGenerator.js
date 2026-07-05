@@ -8,19 +8,57 @@ const generateReport = (
 
     return {
 
-        generatedAt: new Date().toISOString(),
+       metadata: {
+            generatedAt: new Date().toISOString(),
+            model: "Gemini 2.5 Flash",
+            version: "1.0.0",
+            processingTime: "Calculated in Controller"
+        },
 
-        company: companyName,
+        company: {
 
-        financialData,
+            name: companyName,
 
-        latestNews: companyNews,
+            symbol: financialData.symbol,
 
-        analysis,
+            sector: financialData.sector,
 
-        investmentScore: score.score,
+            industry: financialData.industry
 
-        recommendation: score.recommendation
+        },
+
+        executiveSummary: {
+            summary: analysis.summary,
+            futureOutlook: analysis.futureOutlook
+        },
+
+        investmentDecision: {
+            recommendation: score.recommendation,
+            confidence: score.score
+        },
+        financialHealth: {
+
+            marketCap: financialData.marketCap,
+
+            currentPrice: financialData.currentPrice,
+
+            currency: financialData.currency,
+
+            exchange: financialData.exchange,
+
+            fiftyTwoWeekHigh: financialData.fiftyTwoWeekHigh,
+
+            fiftyTwoWeekLow: financialData.fiftyTwoWeekLow
+
+        },
+
+        strengths: analysis.strengths,
+
+        weaknesses: analysis.weaknesses,
+
+        risks: analysis.risks,
+
+        latestNews: companyNews
 
     };
 
