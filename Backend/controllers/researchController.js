@@ -1,9 +1,8 @@
-
 const { researchCompany } = require("../services/researchService");
-const { formatInvestmentReport } = require("../utils/reportFormatter");
 
 const analyzeCompany = async (req, res) => {
     const start = Date.now();
+
     try {
         const { company } = req.body;
 
@@ -15,15 +14,13 @@ const analyzeCompany = async (req, res) => {
             });
         }
 
-        // Run AI research
-        const result = await researchCompany(company);
+        // Run the AI Investment Research Agent
+        const report = await researchCompany(company);
 
-        // Format response
-        const report = formatInvestmentReport(result);
-        report.metadata.processingTime =
-        `${Date.now()-start} ms`;
+        // Add processing time to metadata
+        report.metadata.processingTime = `${Date.now() - start} ms`;
 
-        // Send response
+        // Send final response
         return res.status(200).json({
             success: true,
             message: "Investment research completed successfully.",
@@ -31,9 +28,11 @@ const analyzeCompany = async (req, res) => {
         });
 
     } catch (error) {
+
         console.error("Research Controller Error:", {
             company: req.body.company,
-            message: error.message
+            message: error.message,
+            stack: error.stack
         });
 
         return res.status(500).json({
