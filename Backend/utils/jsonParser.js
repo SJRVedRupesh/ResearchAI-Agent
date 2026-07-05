@@ -1,15 +1,17 @@
 const parseAIResponse = (response) => {
-
     try {
+        // Remove markdown code fences if present
+        const cleanedResponse = response
+            .replace(/```json/g, "")
+            .replace(/```/g, "")
+            .trim();
 
-        return JSON.parse(response);
+        return JSON.parse(cleanedResponse);
 
     } catch (error) {
-
-        throw new Error("Invalid JSON received from Gemini.");
-
+        console.error("Invalid AI Response:", response);
+        throw new Error("Failed to parse AI response.");
     }
-
 };
 
 module.exports = {

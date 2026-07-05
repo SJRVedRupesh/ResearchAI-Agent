@@ -1,54 +1,45 @@
-const { getCompanyNews } = require("./newsService");
+const model = require("../config/langchain");
+const researchPrompt = require("../utils/researchPrompt");
+
 const { getCompanyFinancials } = require("./financialService");
-const { generateInvestmentAnalysis } = require("./geminiService");
+const { getCompanyNews } = require("./newsService");
 
-const buildPrompt = (financialData) => {
-    return `
-You are a professional CFA investment analyst.
-
-Analyze the company using the financial information below.
-
-Financial Data:
-${JSON.stringify(financialData, null, 2)}
-
-Return ONLY valid JSON in this format:
-
-{
-  "company": "",
-  "industry": "",
-  "summary": "",
-  "strengths": [],
-  "weaknesses": [],
-  "risks": [],
-  "recommendation": "INVEST | HOLD | PASS",
-  "confidence": 0
-}
-`;
-};
+const { parseAIResponse } = require("../utils/jsonParser");
 
 const researchCompany = async (companyName) => {
+    try {
+        // Step 1: Fetch financial data
+        const financialData = await getCompanyFinancials(companyName);
 
-    // Step 1: Fetch financial data
-    const financialData = await getCompanyFinancials(companyName);
+        // Step 2: Fetch latest company news
+        const companyNews = await getCompanyNews(companyName);
 
-    const companyNews =
-    await getCompanyNews(companyName);
+        // Step 3: Format the prompt using LangChain PromptTemplate
+        const formattedPrompt = await researchPrompt.format({
+            financialData: JSON.stringify(financialData, null, 2),
+            news: JSON.stringify(companyNews, null, 2)
+        });
 
-    // Step 2: Build AI prompt
-    const prompt =
-    buildInvestmentPrompt(
-        financialData,
-        companyNews
-    );
+        // Step 4: Invoke Gemini through LangChain
+        const response = await model.invoke(formattedPrompt);
 
-    // Step 3: Generate AI analysis
-    const analysis = await generateInvestmentAnalysis(prompt);
+        // Step 5: Get AI response
+        const aiOutput = response.content;
 
-    // Step 4: Return response
-    return {
-        financialData,
-        analysis
-    };
+        // Step 6: Parse JSON response
+        const analysis = parseAIResponse(aiOutput);
+
+        // Step 7: Return complete response
+        return {
+            financialData,
+            companyNews,
+            analysis
+        };
+
+    } catch (error) {
+        console.error("Research Service Error:", error);
+        throw error;
+    }
 };
 
 module.exports = {
