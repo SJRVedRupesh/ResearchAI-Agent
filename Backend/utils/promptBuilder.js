@@ -1,33 +1,31 @@
-const buildInvestmentPrompt = (company) => {
+const buildInvestmentPrompt = (
+    financialData,
+    companyNews
+) => {
 
     return `
-You are a senior investment analyst.
+You are a senior CFA investment analyst.
 
-Analyze the company "${company}".
+Financial Data:
 
-Return ONLY valid JSON.
+${JSON.stringify(financialData, null, 2)}
 
-The JSON schema is:
+Recent News:
+
+${JSON.stringify(companyNews, null, 2)}
+
+Based ONLY on this information, return ONLY valid JSON.
 
 {
-  "company": "",
-  "industry": "",
-  "summary": "",
-  "strengths": [],
-  "weaknesses": [],
-  "risks": [],
-  "recommendation": "",
-  "confidence": 0
+  "company":"",
+  "industry":"",
+  "summary":"",
+  "strengths":[],
+  "weaknesses":[],
+  "risks":[],
+  "recommendation":"",
+  "confidence":0
 }
-
-Rules:
-
-Do not write markdown.
-
-Do not use triple backticks.
-
-Return only JSON.
-
 `;
 
 };

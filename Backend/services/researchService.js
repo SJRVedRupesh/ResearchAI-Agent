@@ -1,3 +1,4 @@
+const { getCompanyNews } = require("./newsService");
 const { getCompanyFinancials } = require("./financialService");
 const { generateInvestmentAnalysis } = require("./geminiService");
 
@@ -30,8 +31,15 @@ const researchCompany = async (companyName) => {
     // Step 1: Fetch financial data
     const financialData = await getCompanyFinancials(companyName);
 
+    const companyNews =
+    await getCompanyNews(companyName);
+
     // Step 2: Build AI prompt
-    const prompt = buildPrompt(financialData);
+    const prompt =
+    buildInvestmentPrompt(
+        financialData,
+        companyNews
+    );
 
     // Step 3: Generate AI analysis
     const analysis = await generateInvestmentAnalysis(prompt);
