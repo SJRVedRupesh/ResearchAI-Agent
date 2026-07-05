@@ -2,7 +2,7 @@ const { collectCompanyData } = require("../pipeline/dataCollector");
 const { analyzeInvestment } = require("../pipeline/aiAnalyzer");
 const { calculateInvestmentScore } = require("../pipeline/scoreEngine");
 const { generateReport } = require("../pipeline/reportGenerator");
-
+const {analyzeNewsSentiment} = require("../pipeline/newsSentimentAnalyzer");
 const runInvestmentResearch = async (companyName) => {
 
     const {
@@ -21,7 +21,8 @@ const runInvestmentResearch = async (companyName) => {
             financialData,
             analysis
         );
-
+    const newsSentiment =
+    await analyzeNewsSentiment(companyNews);
     return generateReport(
         companyName,
         financialData,

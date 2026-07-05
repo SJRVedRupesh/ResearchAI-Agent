@@ -51,6 +51,12 @@ const generateReport = (
             fiftyTwoWeekLow: financialData.fiftyTwoWeekLow
 
         },
+        newsSentiment: {
+            overall: newsSentiment.overallSentiment,
+            score: newsSentiment.sentimentScore,
+            summary: newsSentiment.summary,
+            keyInsights: newsSentiment.keyInsights
+        },
 
         strengths: analysis.strengths,
 

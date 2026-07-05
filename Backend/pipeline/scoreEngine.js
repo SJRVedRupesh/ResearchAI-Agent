@@ -1,33 +1,73 @@
 const calculateInvestmentScore = (
     financialData,
-    analysis
+    analysis,
+    newsSentiment
 ) => {
 
-    let score = 50;
+    // -----------------------------
+    // Financial Score
+    // -----------------------------
+    let financialScore = 50;
 
-    if (financialData.marketCap > 500000000000) {
-        score += 20;
+    // Large market cap companies are generally more stable
+    if (financialData.marketCap > 1000000000000) {
+        financialScore += 20;
+    } else if (financialData.marketCap > 500000000000) {
+        financialScore += 15;
+    } else if (financialData.marketCap > 100000000000) {
+        financialScore += 10;
     }
 
-    if (financialData.currentPrice > 100) {
-        score += 10;
+    // Higher stock price isn't always better,
+    // but we'll use it as a simple indicator for now.
+    if (financialData.currentPrice > 200) {
+        financialScore += 10;
+    } else if (financialData.currentPrice > 100) {
+        financialScore += 5;
     }
 
-    score += Math.round((analysis.confidence || 50) * 0.2);
+    // Cap financial score at 100
+    financialScore = Math.min(financialScore, 100);
 
-    score = Math.min(score, 100);
+    // -----------------------------
+    // AI Confidence
+    // -----------------------------
+    const aiScore = analysis.confidence || 50;
 
+    // -----------------------------
+    // News Sentiment
+    // -----------------------------
+    const newsScore = newsSentiment.sentimentScore || 50;
+
+    // -----------------------------
+    // Weighted Final Score
+    // -----------------------------
+    const finalScore = Math.round(
+        (financialScore * 0.5) +
+        (aiScore * 0.3) +
+        (newsScore * 0.2)
+    );
+
+    // -----------------------------
+    // Recommendation
+    // -----------------------------
     let recommendation = "HOLD";
 
-    if (score >= 80)
+    if (finalScore >= 80) {
         recommendation = "INVEST";
-
-    else if (score < 60)
+    } else if (finalScore < 60) {
         recommendation = "PASS";
+    }
 
     return {
 
-        score,
+        financialScore,
+
+        aiScore,
+
+        newsScore,
+
+        finalScore,
 
         recommendation
 
