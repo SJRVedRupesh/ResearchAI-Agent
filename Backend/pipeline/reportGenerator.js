@@ -3,12 +3,13 @@ const generateReport = (
     financialData,
     companyNews,
     analysis,
-    score
+    score,
+    newsSentiment
 ) => {
 
     return {
 
-       metadata: {
+        metadata: {
             generatedAt: new Date().toISOString(),
             model: "Gemini 2.5 Flash",
             version: "1.0.0",
@@ -16,15 +17,10 @@ const generateReport = (
         },
 
         company: {
-
             name: companyName,
-
             symbol: financialData.symbol,
-
             sector: financialData.sector,
-
             industry: financialData.industry
-
         },
 
         executiveSummary: {
@@ -34,23 +30,18 @@ const generateReport = (
 
         investmentDecision: {
             recommendation: score.recommendation,
-            confidence: score.score
+            confidence: score.finalScore
         },
+
         financialHealth: {
-
             marketCap: financialData.marketCap,
-
             currentPrice: financialData.currentPrice,
-
             currency: financialData.currency,
-
             exchange: financialData.exchange,
-
             fiftyTwoWeekHigh: financialData.fiftyTwoWeekHigh,
-
             fiftyTwoWeekLow: financialData.fiftyTwoWeekLow
-
         },
+
         newsSentiment: {
             overall: newsSentiment.overallSentiment,
             score: newsSentiment.sentimentScore,
