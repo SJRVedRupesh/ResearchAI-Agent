@@ -9,9 +9,12 @@ const analyzeCompany = async (req, res) => {
 
     const start = Date.now();
 
+    // Available in both try and catch
+    let company = req.body.company;
+
     try {
 
-        // Validate Request Body
+        // Validate request
         const { error, value } = researchSchema.validate(req.body);
 
         if (error) {
@@ -20,47 +23,36 @@ const analyzeCompany = async (req, res) => {
             );
         }
 
-        // Get validated company name
-        const { company } = value;
+        // Use validated value
+        company = value.company;
 
-        // Run AI Research
+        // Generate report
         const report = await researchCompany(company);
 
-        // Add processing time
+        // Processing time
         report.metadata.processingTime =
             `${Date.now() - start} ms`;
 
-        // Success Response
         return res.status(200).json(
-
             successResponse(
-
                 report,
-
                 "Investment research completed successfully."
-
             )
-
         );
 
     } catch (error) {
 
         console.error("Research Controller Error:", {
             company,
-
-            message: error.message
+            message: error.message,
+            stack: error.stack
         });
 
         return res.status(500).json(
-
             errorResponse(
-
                 "Failed to analyze company.",
-
                 error.message
-
             )
-
         );
 
     }
