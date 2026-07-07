@@ -1,34 +1,47 @@
 const { researchCompany } = require("../services/researchService");
-const {researchSchema} = require("../validators/researchValidator");
+const { researchSchema } = require("../validators/researchValidator");
+const {
+    successResponse,
+    errorResponse
+} = require("../utils/apiResponse");
 
 const analyzeCompany = async (req, res) => {
+
     const start = Date.now();
 
     try {
-        const { company } = req.body;
 
-        // Validate request
-        const { error } =
-        researchSchema.validate(req.body);
-        if(error){
-        return res.status(400).json({
-            success:false,
-            message:error.details[0].message
-        });
-    }
+        // Validate Request Body
+        const { error, value } = researchSchema.validate(req.body);
 
-        // Run the AI Investment Research Agent
+        if (error) {
+            return res.status(400).json(
+                errorResponse(error.details[0].message)
+            );
+        }
+
+        // Get validated company name
+        const { company } = value;
+
+        // Run AI Research
         const report = await researchCompany(company);
 
-        // Add processing time to metadata
-        report.metadata.processingTime = `${Date.now() - start} ms`;
+        // Add processing time
+        report.metadata.processingTime =
+            `${Date.now() - start} ms`;
 
-        // Send final response
-        return res.status(200).json({
-            success: true,
-            message: "Investment research completed successfully.",
-            data: report
-        });
+        // Success Response
+        return res.status(200).json(
+
+            successResponse(
+
+                report,
+
+                "Investment research completed successfully."
+
+            )
+
+        );
 
     } catch (error) {
 
@@ -38,12 +51,20 @@ const analyzeCompany = async (req, res) => {
             stack: error.stack
         });
 
-        return res.status(500).json({
-            success: false,
-            message: "Failed to analyze company.",
-            error: error.message
-        });
+        return res.status(500).json(
+
+            errorResponse(
+
+                "Failed to analyze company.",
+
+                error.message
+
+            )
+
+        );
+
     }
+
 };
 
 module.exports = {

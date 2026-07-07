@@ -16,14 +16,17 @@ const successResponse = (
 };
 
 const errorResponse = (
-    message
+    message,
+    details = null
 ) => {
 
     return {
 
         success: false,
 
-        message
+        message,
+
+        details
 
     };
 
