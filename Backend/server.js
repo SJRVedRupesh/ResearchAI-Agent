@@ -4,7 +4,7 @@ const cors = require("cors");
 // Import routes
 const healthRoutes = require("./routes/healthRoutes");
 const researchRoutes = require("./routes/researchRoutes");
-
+const errorHandler =require("./middleware/errorHandler");
 const app = express();
 
 app.use(cors());
@@ -19,6 +19,8 @@ app.use("/api/research", researchRoutes);
 app.get("/", (req, res) => {
     res.send("Research AI Agent Backend Running");
 });
+//Handle Controller
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 

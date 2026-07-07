@@ -1,4 +1,5 @@
 const { researchCompany } = require("../services/researchService");
+const {researchSchema} = require("../validators/researchValidator");
 
 const analyzeCompany = async (req, res) => {
     const start = Date.now();
@@ -7,12 +8,14 @@ const analyzeCompany = async (req, res) => {
         const { company } = req.body;
 
         // Validate request
-        if (!company || company.trim() === "") {
-            return res.status(400).json({
-                success: false,
-                message: "Company name is required."
-            });
-        }
+        const { error } =
+        researchSchema.validate(req.body);
+        if(error){
+        return res.status(400).json({
+            success:false,
+            message:error.details[0].message
+        });
+    }
 
         // Run the AI Investment Research Agent
         const report = await researchCompany(company);
