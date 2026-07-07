@@ -1,3 +1,7 @@
+const {
+    errorResponse
+} = require("../utils/apiResponse");
+
 const errorHandler = (
     err,
     req,
@@ -5,15 +9,21 @@ const errorHandler = (
     next
 ) => {
 
-    console.error(err);
+    console.error("Global Error:", err);
 
-    res.status(500).json({
+    const statusCode =
+        err.statusCode || 500;
 
-        success:false,
+    res.status(statusCode).json(
 
-        message:err.message
+        errorResponse(
 
-    });
+            err.message ||
+            "Internal Server Error"
+
+        )
+
+    );
 
 };
 

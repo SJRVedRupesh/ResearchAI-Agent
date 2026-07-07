@@ -46,9 +46,9 @@ const analyzeCompany = async (req, res) => {
     } catch (error) {
 
         console.error("Research Controller Error:", {
-            company: req.body.company,
-            message: error.message,
-            stack: error.stack
+            company,
+
+            message: error.message
         });
 
         return res.status(500).json(
