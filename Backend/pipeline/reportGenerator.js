@@ -30,7 +30,10 @@ const generateReport = (
 
         investmentDecision: {
             recommendation: score.recommendation,
-            confidence: score.finalScore
+            confidence: score.finalScore,
+            financialScore: score.financialScore,
+            aiScore: score.aiScore,
+            newsScore: score.newsScore
         },
 
         financialHealth: {

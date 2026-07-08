@@ -1,122 +1,172 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { FiSearch, FiTrendingUp, FiAlertCircle } from 'react-icons/fi';
+import ThemeToggle from './components/ThemeToggle';
+import HistoryTracker from './components/HistoryTracker';
+import LoadingProgress from './components/LoadingProgress';
+import ReportDashboard from './components/ReportDashboard';
+import { analyzeCompany } from './services/api';
 
-function App() {
-  const [count, setCount] = useState(0)
+const DEFAULT_SUGGESTIONS = ['NVIDIA', 'Apple', 'Tesla', 'Microsoft'];
+
+export default function App() {
+  const [query, setQuery] = useState('');
+  const [searchCompany, setSearchCompany] = useState('');
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Search history state persisted in localstorage
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('search_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('search_history', JSON.stringify(history));
+  }, [history]);
+
+  const handleSearch = async (companyName) => {
+    if (!companyName || !companyName.trim()) return;
+    
+    const formattedQuery = companyName.trim();
+    setSearchCompany(formattedQuery);
+    setLoading(true);
+    setError(null);
+    setReport(null);
+
+    try {
+      const data = await analyzeCompany(formattedQuery);
+      setReport(data);
+      
+      // Update search history (deduplicate and add to front)
+      setHistory((prev) => {
+        const filtered = prev.filter((item) => item.toLowerCase() !== formattedQuery.toLowerCase());
+        return [formattedQuery, ...filtered].slice(0, 8); // Keep last 8 searches
+      });
+    } catch (err) {
+      console.error(err);
+      setError({
+        title: 'Analysis Failed',
+        message: err.message || 'Could not connect to the investment backend. Make sure the server is running on port 5000 and dependencies are configured.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    handleSearch(query);
+  };
+
+  const handleRemoveHistory = (companyToRemove) => {
+    setHistory((prev) => prev.filter((item) => item !== companyToRemove));
+  };
+
+  const handleClearHistory = () => {
+    setHistory([]);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app-container">
+      {/* Top Navbar */}
+      <header className="app-header">
+        <div className="logo-section">
+          <FiTrendingUp className="logo-icon" />
+          <span className="logo-text">InvestIQ Agent</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+        <div className="header-actions">
+          <ThemeToggle />
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
+      {/* Main Content Area */}
+      <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
+        
+        {/* Error Alert Display */}
+        {error && !loading && (
+          <div className="error-alert">
+            <FiAlertCircle className="error-alert-icon" />
+            <div className="error-alert-content">
+              <span className="error-alert-title">{error.title}</span>
+              <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>{error.message}</span>
+            </div>
+          </div>
+        )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {loading ? (
+          /* Loading Agent Screen */
+          <LoadingProgress companyName={searchCompany} />
+        ) : report ? (
+          /* Detailed Report Dashboard */
+          <ReportDashboard 
+            report={report} 
+            onBack={() => {
+              setReport(null);
+              setError(null);
+            }} 
+          />
+        ) : (
+          /* Landing Search Area */
+          <div className="search-hero-section">
+            <span className="hero-badge">Autonomous Market Intelligence</span>
+            <h1>Analyze any stock with AI research agents</h1>
+            <p>
+              Get institutional-grade investment reports instantly. Our agent aggregates real-time financials, evaluates news sentiment, and uses Gemini AI to conduct SWOT analyses.
+            </p>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+            <form onSubmit={handleFormSubmit} className="search-form-container">
+              <div className="search-input-wrapper">
+                <FiSearch className="search-icon-left" />
+                <input
+                  type="text"
+                  placeholder="Enter company or ticker (e.g. NVIDIA, Apple, TSLA)..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <button className="search-button" type="submit" disabled={loading}>
+                  Analyze
+                </button>
+              </div>
+            </form>
+
+            {/* Default Quick Suggestions */}
+            <div className="search-suggestions">
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginRight: '0.25rem' }}>Try searching:</span>
+              {DEFAULT_SUGGESTIONS.map((sug) => (
+                <button
+                  key={sug}
+                  className="suggestion-chip"
+                  type="button"
+                  onClick={() => {
+                    setQuery(sug);
+                    handleSearch(sug);
+                  }}
+                >
+                  {sug}
+                </button>
+              ))}
+            </div>
+
+            {/* Recent Searches history list */}
+            <HistoryTracker
+              history={history}
+              onSelect={(comp) => {
+                setQuery(comp);
+                handleSearch(comp);
+              }}
+              onRemove={handleRemoveHistory}
+              onClear={handleClearHistory}
+            />
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
-
-export default App
