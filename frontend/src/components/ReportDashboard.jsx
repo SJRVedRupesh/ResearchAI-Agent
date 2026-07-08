@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { 
-  FiArrowLeft, FiPrinter, FiTrendingUp, FiTrendingDown, 
-  FiActivity, FiFileText, FiThumbsUp, 
-  FiThumbsDown, FiAlertCircle, FiBriefcase,
-  FiExternalLink, FiAlertTriangle
+  FiArrowLeft, FiPrinter, FiActivity, FiFileText, 
+  FiThumbsUp, FiThumbsDown, FiAlertCircle, 
+  FiBriefcase, FiExternalLink, FiAlertTriangle
 } from 'react-icons/fi';
 
 const formatCurrency = (value, currency = 'USD') => {
@@ -32,7 +31,6 @@ export default function ReportDashboard({ report, onBack }) {
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    // Trigger progress bar animations after mount
     const timer = setTimeout(() => setAnimate(true), 100);
     return () => clearTimeout(timer);
   }, []);
@@ -55,7 +53,28 @@ export default function ReportDashboard({ report, onBack }) {
   const rec = (investmentDecision.recommendation || 'HOLD').toUpperCase();
   const confidence = investmentDecision.confidence || 0;
   
-  // Color configuration based on status
+  // Local score calculations (matching the backend score engine formula)
+  let localFinancialScore = 50;
+  const mcap = financialHealth.marketCap || 0;
+  if (mcap > 1e12) localFinancialScore += 20;
+  else if (mcap > 5e11) localFinancialScore += 15;
+  else if (mcap > 1e11) localFinancialScore += 10;
+
+  const price = financialHealth.currentPrice || 0;
+  if (price > 200) localFinancialScore += 10;
+  else if (price > 100) localFinancialScore += 5;
+  localFinancialScore = Math.min(localFinancialScore, 100);
+
+  const localNewsScore = newsSentiment.score || 50;
+
+  // Reverse calculate the AI score: finalScore = round(fin*0.5 + ai*0.3 + news*0.2)
+  let localAiScore = 50;
+  if (confidence) {
+    const rawAiScore = (confidence - (localFinancialScore * 0.5) - (localNewsScore * 0.2)) / 0.3;
+    localAiScore = Math.min(Math.max(Math.round(rawAiScore), 0), 100);
+  }
+
+  // Color config
   let statusClass = 'hold';
   let statusColor = 'var(--color-hold)';
   if (rec === 'INVEST' || rec === 'BUY') {
@@ -66,79 +85,78 @@ export default function ReportDashboard({ report, onBack }) {
     statusColor = 'var(--color-pass)';
   }
 
-  // Calculate SVG circular stroke properties
-  const radius = 60;
-  const circumference = 2 * Math.PI * radius; // ~377
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius; // ~314
   const strokeDashoffset = animate ? circumference - (circumference * confidence) / 100 : circumference;
 
-  // Calculate 52 week price positioning
   const low = financialHealth.fiftyTwoWeekLow || 0;
   const high = financialHealth.fiftyTwoWeekHigh || 0;
-  const current = financialHealth.currentPrice || 0;
   let rangePercent = 0;
   if (high > low) {
-    rangePercent = Math.min(Math.max(((current - low) / (high - low)) * 100, 0), 100);
+    rangePercent = Math.min(Math.max(((price - low) / (high - low)) * 100, 0), 100);
   }
 
   return (
     <div style={{ width: '100%' }}>
-      {/* Header / Actions */}
+      {/* Action bar */}
       <div className="back-btn-wrapper">
         <button className="btn" onClick={onBack} type="button">
-          <FiArrowLeft /> Back to Dashboard
+          <FiArrowLeft /> Back to Search
         </button>
         <button className="btn btn-primary" onClick={() => window.print()} type="button">
-          <FiPrinter /> Print Report
+          <FiPrinter /> Export PDF / Print
         </button>
       </div>
 
-      {/* Company Overview Block */}
-      <div className="glass-card" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      {/* Header Info */}
+      <div className="glass-card" style={{ marginBottom: '1.25rem', textAlign: 'left', borderRadius: 'var(--radius-md)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>{company.name || 'Company Name'}</h1>
-              <span className="hero-badge" style={{ animation: 'none', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.2rem 0.6rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                {company.name || 'Company Name'}
+              </h1>
+              <span className="hero-badge" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>
                 {company.symbol || 'SYMBOL'}
               </span>
             </div>
-            <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', fontSize: '0.95rem' }}>
-              {company.sector || 'Sector'} &bull; {company.industry || 'Industry'}
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.15rem' }}>
+              {company.sector} &bull; {company.industry}
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {formatCurrency(financialHealth.currentPrice, financialHealth.currency)}
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              {formatCurrency(price, financialHealth.currency)}
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Listed on {financialHealth.exchange || 'Exchange'}
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Market currency: {financialHealth.currency || 'USD'} | exchange: {financialHealth.exchange || 'Exchange'}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Main Grid */}
+      {/* Grid container */}
       <div className="dashboard-grid">
         
-        {/* Investment Decision Card */}
+        {/* Recommendation Scorecard */}
         <div className="col-4 glass-card decision-card">
           <div className="section-header">
-            <FiActivity /> Decision Summary
+            <FiActivity /> Investment Scorecard
           </div>
           
-          <div style={{ margin: '1rem 0' }}>
+          <div>
             <div className={`decision-badge ${statusClass}`}>
-              {rec === 'INVEST' ? 'INVEST' : rec === 'PASS' ? 'PASS' : 'HOLD'}
+              {rec === 'INVEST' ? 'BUY / INVEST' : rec === 'PASS' ? 'SELL / PASS' : 'HOLD'}
             </div>
           </div>
 
           <div className="score-circle-wrapper">
             <svg className="score-circle-svg">
-              <circle className="score-circle-bg" cx="70" cy="70" r={radius} />
+              <circle className="score-circle-bg" cx="60" cy="60" r={radius} />
               <circle 
                 className="score-circle-fill" 
-                cx="70" 
-                cy="70" 
+                cx="60" 
+                cy="60" 
                 r={radius} 
                 stroke={statusColor}
                 strokeDasharray={circumference}
@@ -147,7 +165,7 @@ export default function ReportDashboard({ report, onBack }) {
             </svg>
             <div className="score-circle-text">
               <span className="score-number">{confidence}%</span>
-              <span className="score-label">Confidence</span>
+              <span className="score-label">Final Rating</span>
             </div>
           </div>
 
@@ -155,25 +173,25 @@ export default function ReportDashboard({ report, onBack }) {
             <div className="sub-score-item">
               <div className="sub-score-info">
                 <span>Financial Score</span>
-                <span>{investmentDecision.financialScore || 50}/100</span>
+                <span>{localFinancialScore}/100</span>
               </div>
               <div className="sub-score-bar-bg">
                 <div 
                   className="sub-score-bar-fill" 
-                  style={{ width: animate ? `${investmentDecision.financialScore || 50}%` : '0%', background: 'var(--color-invest)' }}
+                  style={{ width: animate ? `${localFinancialScore}%` : '0%', background: 'var(--color-accent)' }}
                 ></div>
               </div>
             </div>
 
             <div className="sub-score-item">
               <div className="sub-score-info">
-                <span>Gemini Analysis Score</span>
-                <span>{investmentDecision.aiScore || 50}/100</span>
+                <span>AI Confidence Score</span>
+                <span>{localAiScore}/100</span>
               </div>
               <div className="sub-score-bar-bg">
                 <div 
                   className="sub-score-bar-fill" 
-                  style={{ width: animate ? `${investmentDecision.aiScore || 50}%` : '0%', background: 'var(--color-accent)' }}
+                  style={{ width: animate ? `${localAiScore}%` : '0%', background: 'var(--color-accent)' }}
                 ></div>
               </div>
             </div>
@@ -181,22 +199,22 @@ export default function ReportDashboard({ report, onBack }) {
             <div className="sub-score-item">
               <div className="sub-score-info">
                 <span>News Sentiment Score</span>
-                <span>{investmentDecision.newsScore || 50}/100</span>
+                <span>{localNewsScore}/100</span>
               </div>
               <div className="sub-score-bar-bg">
                 <div 
                   className="sub-score-bar-fill" 
-                  style={{ width: animate ? `${investmentDecision.newsScore || 50}%` : '0%', background: 'var(--color-hold)' }}
+                  style={{ width: animate ? `${localNewsScore}%` : '0%', background: 'var(--color-accent)' }}
                 ></div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Financial Metrics Card */}
-        <div className="col-8 glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'left' }}>
+        {/* Financial Metrics */}
+        <div className="col-8 glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left' }}>
           <div className="section-header">
-            <FiBriefcase /> Financial Health
+            <FiBriefcase /> Key Valuation Indicators
           </div>
           
           <div className="financial-health-metrics">
@@ -206,113 +224,153 @@ export default function ReportDashboard({ report, onBack }) {
             </div>
             <div className="metric-box">
               <div className="metric-label">Current Stock Price</div>
-              <div className="metric-value">{formatCurrency(financialHealth.currentPrice, financialHealth.currency)}</div>
+              <div className="metric-value">{formatCurrency(price, financialHealth.currency)}</div>
             </div>
             <div className="metric-box">
-              <div className="metric-label">Exchange Base</div>
-              <div className="metric-value" style={{ fontSize: '0.95rem', textTransform: 'uppercase' }}>{financialHealth.exchange || 'N/A'}</div>
+              <div className="metric-label">Market Exchange</div>
+              <div className="metric-value" style={{ fontSize: '0.85rem' }}>{financialHealth.exchange || 'N/A'}</div>
             </div>
           </div>
 
-          {/* 52-Week Range Bar */}
-          <div style={{ marginTop: '0.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-              <span>52-Week Range</span>
-              <span>Position: {rangePercent.toFixed(0)}%</span>
+          {/* Range Slider */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+              <span>52-Week Trading Range</span>
+              <span>Relative Position: {rangePercent.toFixed(0)}%</span>
             </div>
             
-            <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '9999px', position: 'relative', overflow: 'visible' }}>
-              {/* Scale Background for light mode */}
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.05)', borderRadius: '9999px', display: 'none' }} className="light-theme-bg"></div>
-              
-              {/* Highlight Fill */}
+            <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '9999px', position: 'relative' }}>
               <div 
                 style={{ 
                   height: '100%', 
-                  background: 'var(--color-accent-gradient)', 
+                  background: 'var(--color-accent)', 
                   borderRadius: '9999px',
                   width: `${rangePercent}%`,
-                  transition: 'width 1.5s ease-out'
+                  transition: 'width 1s ease-out'
                 }}
               ></div>
-
-              {/* Indicator Dot */}
               <div 
                 style={{
                   position: 'absolute',
                   top: '50%',
                   left: `${rangePercent}%`,
                   transform: 'translate(-50%, -50%)',
-                  width: '16px',
-                  height: '16px',
+                  width: '12px',
+                  height: '12px',
                   borderRadius: '50%',
-                  backgroundColor: '#ffffff',
-                  border: '3px solid var(--color-accent)',
-                  boxShadow: '0 0 8px rgba(0,0,0,0.5)',
-                  transition: 'left 1.5s ease-out'
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '2px solid var(--color-accent)',
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'left 1s ease-out'
                 }}
               ></div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
-              <span>Low: {formatCurrency(financialHealth.fiftyTwoWeekLow, financialHealth.currency)}</span>
-              <span>Current: {formatCurrency(financialHealth.currentPrice, financialHealth.currency)}</span>
-              <span>High: {formatCurrency(financialHealth.fiftyTwoWeekHigh, financialHealth.currency)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              <span>Low: {formatCurrency(low, financialHealth.currency)}</span>
+              <span>Price: {formatCurrency(price, financialHealth.currency)}</span>
+              <span>High: {formatCurrency(high, financialHealth.currency)}</span>
             </div>
           </div>
 
-          <div style={{ marginTop: 'auto', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-color)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            <strong>Analyst Note:</strong> The score calculation weighs basic financials (50%), automated news sentiment analysis (20%), and deep generative LLM business model assessments (30%) to evaluate this risk rating.
+          <div style={{ marginTop: 'auto', background: 'var(--bg-primary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            <strong>Assessment Methodology:</strong> Our analysis aggregates direct ticker pricing (50% weight), natural language sentiment tracking of public articles (20% weight), and specialized semantic evaluations of the firm's outlook (30% weight).
           </div>
         </div>
 
-        {/* Executive Summary & Future Outlook */}
-        <div className="col-8 glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left' }}>
+        {/* SWOT Blocks */}
+        <div className="col-4 glass-card strengths-card">
+          <div className="section-header" style={{ borderColor: 'var(--color-invest)' }}>
+            <FiThumbsUp style={{ color: 'var(--color-invest)' }} /> Strengths
+          </div>
+          <ul className="swot-list">
+            {strengths.map((str, idx) => (
+              <li className="swot-item" key={idx}>
+                <FiThumbsUp className="swot-icon" style={{ marginTop: '0.15rem' }} />
+                <span>{str}</span>
+              </li>
+            ))}
+            {strengths.length === 0 && <li className="swot-item">No major strengths noted.</li>}
+          </ul>
+        </div>
+
+        <div className="col-4 glass-card weaknesses-card">
+          <div className="section-header" style={{ borderColor: 'var(--color-hold)' }}>
+            <FiThumbsDown style={{ color: 'var(--color-hold)' }} /> Weaknesses
+          </div>
+          <ul className="swot-list">
+            {weaknesses.map((weak, idx) => (
+              <li className="swot-item" key={idx}>
+                <FiThumbsDown className="swot-icon" style={{ marginTop: '0.15rem' }} />
+                <span>{weak}</span>
+              </li>
+            ))}
+            {weaknesses.length === 0 && <li className="swot-item">No major weaknesses noted.</li>}
+          </ul>
+        </div>
+
+        <div className="col-4 glass-card risks-card">
+          <div className="section-header" style={{ borderColor: 'var(--color-pass)' }}>
+            <FiAlertTriangle style={{ color: 'var(--color-pass)' }} /> Risks & Threats
+          </div>
+          <ul className="swot-list">
+            {risks.map((risk, idx) => (
+              <li className="swot-item" key={idx}>
+                <FiAlertCircle className="swot-icon" style={{ marginTop: '0.15rem' }} />
+                <span>{risk}</span>
+              </li>
+            ))}
+            {risks.length === 0 && <li className="swot-item">No major risks noted.</li>}
+          </ul>
+        </div>
+
+        {/* Executive Summary */}
+        <div className="col-8 glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
           <div className="section-header">
             <FiFileText /> Executive Summary & Future Outlook
           </div>
           <div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Overview</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', lineHeight: '1.6' }}>
-              {executiveSummary.summary || 'Summary not generated.'}
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>Overview</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5' }}>
+              {executiveSummary.summary || 'Summary details unavailable.'}
             </p>
           </div>
-          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Future Outlook</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', lineHeight: '1.6' }}>
-              {executiveSummary.futureOutlook || 'Outlook details not generated.'}
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>Future Outlook</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5' }}>
+              {executiveSummary.futureOutlook || 'Outlook details unavailable.'}
             </p>
           </div>
         </div>
 
-        {/* News Sentiment Card */}
-        <div className="col-4 glass-card" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* Public Media Sentiment */}
+        <div className="col-4 glass-card" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="section-header">
-            <FiThumbsUp /> Sentiment Analysis
+            <FiThumbsUp /> Media Sentiment
           </div>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Overall Sentiment</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Overall Tone</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                 {newsSentiment.overall || 'Neutral'}
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Sentiment Score</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Sentiment score</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                 {newsSentiment.score || 50}%
               </div>
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            {newsSentiment.summary || 'Sentiment analysis summary not generated.'}
+          <div style={{ background: 'var(--bg-primary)', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            {newsSentiment.summary || 'Summary unavailable.'}
           </div>
 
           <div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Key Market Insights:</div>
-            <ul style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>Key Market Highlights:</div>
+            <ul style={{ paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               {(newsSentiment.keyInsights || []).map((insight, idx) => (
                 <li key={idx}>{insight}</li>
               ))}
@@ -323,69 +381,19 @@ export default function ReportDashboard({ report, onBack }) {
           </div>
         </div>
 
-        {/* SWOT (Strengths, Weaknesses, Risks) Columns */}
-        <div className="col-4 glass-card strengths-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="section-header" style={{ borderColor: 'var(--color-invest-border)' }}>
-            <FiThumbsUp style={{ color: 'var(--color-invest)' }} /> Strengths
-          </div>
-          <ul className="swot-list">
-            {strengths.map((str, idx) => (
-              <li className="swot-item" key={idx}>
-                <FiThumbsUp className="swot-icon" />
-                <span>{str}</span>
-              </li>
-            ))}
-            {strengths.length === 0 && <li className="swot-item">No strengths noted.</li>}
-          </ul>
-        </div>
-
-        <div className="col-4 glass-card weaknesses-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="section-header" style={{ borderColor: 'var(--color-hold-border)' }}>
-            <FiThumbsDown style={{ color: 'var(--color-hold)' }} /> Weaknesses
-          </div>
-          <ul className="swot-list">
-            {weaknesses.map((weak, idx) => (
-              <li className="swot-item" key={idx}>
-                <FiThumbsDown className="swot-icon" />
-                <span>{weak}</span>
-              </li>
-            ))}
-            {weaknesses.length === 0 && <li className="swot-item">No weaknesses noted.</li>}
-          </ul>
-        </div>
-
-        <div className="col-4 glass-card risks-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="section-header" style={{ borderColor: 'var(--color-pass-border)' }}>
-            <FiAlertTriangle style={{ color: 'var(--color-pass)' }} /> Risks & Threats
-          </div>
-          <ul className="swot-list">
-            {risks.map((risk, idx) => (
-              <li className="swot-item" key={idx}>
-                <FiAlertCircle className="swot-icon" />
-                <span>{risk}</span>
-              </li>
-            ))}
-            {risks.length === 0 && <li className="swot-item">No major risks noted.</li>}
-          </ul>
-        </div>
-
-        {/* Latest News Articles Feed */}
+        {/* News Feed */}
         <div className="col-12 glass-card">
           <div className="section-header">
-            <FiFileText /> Raw News Articles Used in Analysis
+            <FiNewspaper /> Referenced Public Articles
           </div>
           
           <div className="news-grid">
             {latestNews.map((article, idx) => (
               <div className="news-card" key={idx}>
                 <div className="news-meta">
-                  <span>Source: {article.source || 'Unknown'}</span>
+                  <span>Source: {article.source}</span>
                   {article.publishedAt && (
-                    <span>Published: {new Date(article.publishedAt).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}</span>
+                    <span>Published: {new Date(article.publishedAt).toLocaleDateString()}</span>
                   )}
                 </div>
                 <div className="news-title">{article.title}</div>
@@ -395,27 +403,27 @@ export default function ReportDashboard({ report, onBack }) {
                     href={article.url} 
                     target="_blank" 
                     rel="noreferrer" 
-                    style={{ fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem', alignSelf: 'flex-start' }}
+                    style={{ fontSize: '0.75rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.2rem', alignSelf: 'flex-start' }}
                   >
-                    Read full article <FiExternalLink />
+                    Read source publication <FiExternalLink />
                   </a>
                 )}
               </div>
             ))}
             {latestNews.length === 0 && (
-              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>
-                No news articles gathered.
+              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1.5rem', fontSize: '0.85rem' }}>
+                No news articles collected.
               </p>
             )}
           </div>
         </div>
 
-        {/* Report Metadata */}
-        <div className="col-12" style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '1rem', padding: '1rem', borderTop: '1px solid var(--border-color)' }}>
-          Generated At: {metadata.generatedAt ? new Date(metadata.generatedAt).toLocaleString() : 'N/A'} &bull; 
+        {/* Metadata */}
+        <div className="col-12" style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.7rem', padding: '0.75rem 0', borderTop: '1px solid var(--border-color)', marginTop: '0.75rem' }}>
+          Prepared At: {metadata.generatedAt ? new Date(metadata.generatedAt).toLocaleString() : 'N/A'} &bull; 
           Agent Brain Model: {metadata.model || 'Gemini'} &bull; 
-          Report Schema Version: {metadata.version || '1.0.0'} &bull; 
-          Processing Latency: {metadata.processingTime || 'N/A'}
+          Report Version: {metadata.version || '1.0.0'} &bull; 
+          Latency: {metadata.processingTime || 'N/A'}
         </div>
 
       </div>
