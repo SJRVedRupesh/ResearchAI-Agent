@@ -384,7 +384,7 @@ export default function ReportDashboard({ report, onBack }) {
         {/* News Feed */}
         <div className="col-12 glass-card">
           <div className="section-header">
-            <FiNewspaper /> Referenced Public Articles
+            <FiFileText /> Referenced Public Articles
           </div>
           
           <div className="news-grid">
