@@ -37,35 +37,34 @@ export default function ReportDashboard({ report, onBack }) {
 
   if (!report) return null;
 
-  const {
-    metadata = {},
-    company = {},
-    executiveSummary = {},
-    investmentDecision = {},
-    financialHealth = {},
-    newsSentiment = {},
-    strengths = [],
-    weaknesses = [],
-    risks = [],
-    latestNews = []
-  } = report;
+  // Safe destructuring handling nulls and missing fields
+  const metadata = report?.metadata || {};
+  const company = report?.company || {};
+  const executiveSummary = report?.executiveSummary || {};
+  const investmentDecision = report?.investmentDecision || {};
+  const financialHealth = report?.financialHealth || {};
+  const newsSentiment = report?.newsSentiment || {};
+  const strengths = report?.strengths || [];
+  const weaknesses = report?.weaknesses || [];
+  const risks = report?.risks || [];
+  const latestNews = report?.latestNews || [];
 
-  const rec = (investmentDecision.recommendation || 'HOLD').toUpperCase();
-  const confidence = investmentDecision.confidence || 0;
+  const rec = (investmentDecision?.recommendation || 'HOLD').toUpperCase();
+  const confidence = investmentDecision?.confidence || 0;
   
   // Local score calculations (matching the backend score engine formula)
   let localFinancialScore = 50;
-  const mcap = financialHealth.marketCap || 0;
+  const mcap = financialHealth?.marketCap || 0;
   if (mcap > 1e12) localFinancialScore += 20;
   else if (mcap > 5e11) localFinancialScore += 15;
   else if (mcap > 1e11) localFinancialScore += 10;
 
-  const price = financialHealth.currentPrice || 0;
+  const price = financialHealth?.currentPrice || 0;
   if (price > 200) localFinancialScore += 10;
   else if (price > 100) localFinancialScore += 5;
   localFinancialScore = Math.min(localFinancialScore, 100);
 
-  const localNewsScore = newsSentiment.score || 50;
+  const localNewsScore = newsSentiment?.score || 50;
 
   // Reverse calculate the AI score: finalScore = round(fin*0.5 + ai*0.3 + news*0.2)
   let localAiScore = 50;
@@ -284,7 +283,7 @@ export default function ReportDashboard({ report, onBack }) {
             <FiThumbsUp style={{ color: 'var(--color-invest)' }} /> Strengths
           </div>
           <ul className="swot-list">
-            {strengths.map((str, idx) => (
+            {Array.isArray(strengths) && strengths.map((str, idx) => (
               <li className="swot-item" key={idx}>
                 <FiThumbsUp className="swot-icon" style={{ marginTop: '0.15rem' }} />
                 <span>{str}</span>
@@ -299,7 +298,7 @@ export default function ReportDashboard({ report, onBack }) {
             <FiThumbsDown style={{ color: 'var(--color-hold)' }} /> Weaknesses
           </div>
           <ul className="swot-list">
-            {weaknesses.map((weak, idx) => (
+            {Array.isArray(weaknesses) && weaknesses.map((weak, idx) => (
               <li className="swot-item" key={idx}>
                 <FiThumbsDown className="swot-icon" style={{ marginTop: '0.15rem' }} />
                 <span>{weak}</span>
@@ -314,7 +313,7 @@ export default function ReportDashboard({ report, onBack }) {
             <FiAlertTriangle style={{ color: 'var(--color-pass)' }} /> Risks & Threats
           </div>
           <ul className="swot-list">
-            {risks.map((risk, idx) => (
+            {Array.isArray(risks) && risks.map((risk, idx) => (
               <li className="swot-item" key={idx}>
                 <FiAlertCircle className="swot-icon" style={{ marginTop: '0.15rem' }} />
                 <span>{risk}</span>
@@ -371,7 +370,7 @@ export default function ReportDashboard({ report, onBack }) {
           <div>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>Key Market Highlights:</div>
             <ul style={{ paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              {(newsSentiment.keyInsights || []).map((insight, idx) => (
+              {Array.isArray(newsSentiment?.keyInsights) && newsSentiment.keyInsights.map((insight, idx) => (
                 <li key={idx}>{insight}</li>
               ))}
               {(!newsSentiment.keyInsights || newsSentiment.keyInsights.length === 0) && (
@@ -388,7 +387,7 @@ export default function ReportDashboard({ report, onBack }) {
           </div>
           
           <div className="news-grid">
-            {latestNews.map((article, idx) => (
+            {Array.isArray(latestNews) && latestNews.map((article, idx) => (
               <div className="news-card" key={idx}>
                 <div className="news-meta">
                   <span>Source: {article.source}</span>
