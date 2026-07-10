@@ -8,11 +8,25 @@ const getCompanyFinancials = async (companyName) => {
 
         const search = await yahooFinance.search(companyName);
 
-        if (!search.quotes.length) {
-            throw new Error("Company not found");
+        // Filter quotes to only those that have a valid symbol
+        const validQuotes = search.quotes.filter(q => q.symbol);
+
+        if (!validQuotes.length) {
+            return {
+                companyName: companyName,
+                symbol: "N/A",
+                sector: "Not Available",
+                industry: "Not Available",
+                currentPrice: 0,
+                marketCap: 0,
+                currency: "USD",
+                exchange: "N/A",
+                fiftyTwoWeekHigh: 0,
+                fiftyTwoWeekLow: 0
+            };
         }
 
-        const symbol = search.quotes[0].symbol;
+        const symbol = validQuotes[0].symbol;
 
         const quote = await yahooFinance.quote(symbol);
 

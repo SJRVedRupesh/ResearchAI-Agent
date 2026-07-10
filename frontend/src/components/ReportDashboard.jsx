@@ -286,7 +286,7 @@ export default function ReportDashboard({ report, onBack }) {
             {Array.isArray(strengths) && strengths.map((str, idx) => (
               <li className="swot-item" key={idx}>
                 <FiThumbsUp className="swot-icon" style={{ marginTop: '0.15rem' }} />
-                <span>{str}</span>
+                <span>{typeof str === 'object' ? (str.point || str.strength || JSON.stringify(str)) : str}</span>
               </li>
             ))}
             {strengths.length === 0 && <li className="swot-item">No major strengths noted.</li>}
@@ -301,7 +301,7 @@ export default function ReportDashboard({ report, onBack }) {
             {Array.isArray(weaknesses) && weaknesses.map((weak, idx) => (
               <li className="swot-item" key={idx}>
                 <FiThumbsDown className="swot-icon" style={{ marginTop: '0.15rem' }} />
-                <span>{weak}</span>
+                <span>{typeof weak === 'object' ? (weak.point || weak.weakness || JSON.stringify(weak)) : weak}</span>
               </li>
             ))}
             {weaknesses.length === 0 && <li className="swot-item">No major weaknesses noted.</li>}
@@ -316,7 +316,7 @@ export default function ReportDashboard({ report, onBack }) {
             {Array.isArray(risks) && risks.map((risk, idx) => (
               <li className="swot-item" key={idx}>
                 <FiAlertCircle className="swot-icon" style={{ marginTop: '0.15rem' }} />
-                <span>{risk}</span>
+                <span>{typeof risk === 'object' ? (risk.point || risk.risk || JSON.stringify(risk)) : risk}</span>
               </li>
             ))}
             {risks.length === 0 && <li className="swot-item">No major risks noted.</li>}
@@ -371,7 +371,11 @@ export default function ReportDashboard({ report, onBack }) {
             <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>Key Market Highlights:</div>
             <ul style={{ paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               {Array.isArray(newsSentiment?.keyInsights) && newsSentiment.keyInsights.map((insight, idx) => (
-                <li key={idx}>{insight}</li>
+                <li key={idx}>
+                  {typeof insight === 'object' 
+                    ? (insight.insight || insight.text || JSON.stringify(insight)) 
+                    : insight}
+                </li>
               ))}
               {(!newsSentiment.keyInsights || newsSentiment.keyInsights.length === 0) && (
                 <li>No insights generated.</li>

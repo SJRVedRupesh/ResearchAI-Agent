@@ -42,6 +42,16 @@ const analyzeCompany = async (req, res) => {
 
     } catch (error) {
 
+        if (error.message === "Company not found") {
+            console.warn(`Company not found: ${company}`);
+            return res.status(404).json(
+                errorResponse(
+                    "Company not found",
+                    "The company you searched for could not be found."
+                )
+            );
+        }
+
         console.error("Research Controller Error:", {
             company,
             message: error.message,
