@@ -113,14 +113,14 @@ export default function ReportDashboard({ report, onBack }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                {company.name || 'Company Name'}
+                {company.name || 'N/A'}
               </h1>
               <span className="hero-badge" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>
-                {company.symbol || 'SYMBOL'}
+                {company.symbol || 'N/A'}
               </span>
             </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.15rem' }}>
-              {company.sector} &bull; {company.industry}
+              {(company.sector === 'Not Available' || !company.sector) ? 'N/A' : company.sector} &bull; {(company.industry === 'Not Available' || !company.industry) ? 'N/A' : company.industry}
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -128,7 +128,7 @@ export default function ReportDashboard({ report, onBack }) {
               {formatCurrency(price, financialHealth.currency)}
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Market currency: {financialHealth.currency || 'USD'} | exchange: {financialHealth.exchange || 'Exchange'}
+              Market currency: {financialHealth.currency || 'USD'} | exchange: {financialHealth.exchange || 'N/A'}
             </p>
           </div>
         </div>

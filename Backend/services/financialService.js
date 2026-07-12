@@ -15,8 +15,8 @@ const getCompanyFinancials = async (companyName) => {
             return {
                 companyName: companyName,
                 symbol: "N/A",
-                sector: "Not Available",
-                industry: "Not Available",
+                sector: "N/A",
+                industry: "N/A",
                 currentPrice: 0,
                 marketCap: 0,
                 currency: "USD",
@@ -36,9 +36,9 @@ const getCompanyFinancials = async (companyName) => {
 
             symbol: quote.symbol,
 
-            sector: quote.sector || "Not Available",
+            sector: quote.sector || "N/A",
 
-            industry: quote.industry || "Not Available",
+            industry: quote.industry || "N/A",
 
             currentPrice: quote.regularMarketPrice,
 
