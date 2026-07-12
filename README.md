@@ -1,6 +1,5 @@
-# 📈 InvestIQ Agent - Autonomous AI Investment Researcher
+# 📈 InvestIQAgent - Autonomous AI Investment Researcher
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?logo=react)
 ![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?logo=node.js)
 ![AI](https://img.shields.io/badge/AI-Gemini%20%2B%20LangChain-FF6D00?logo=google)
@@ -8,6 +7,7 @@
 **InvestIQ Agent** is a full-stack AI-powered market intelligence application. It autonomously aggregates real-time company financials, evaluates recent news sentiment, and utilizes Google's Gemini AI (via LangChain) to conduct institutional-grade SWOT analyses on any publicly traded stock.
 
 ---
+
 
 ## ✨ Features
 
@@ -18,6 +18,7 @@
 - **⚡ Fast & Responsive UI**: Built with React and Vite for a seamless, interactive user experience.
 
 ---
+
 
 ## 🛠️ Tech Stack
 
@@ -97,10 +98,10 @@ npm run dev
 
 ---
 
-## 🌍 Deployment Guide
+## 🌍 Deployment 
 
 ### Deploying the Backend (Render)
-1. Push your code to GitHub.
+1. Push code to GitHub.
 2. Create a new **Web Service** on [Render](https://render.com).
 3. Connect your GitHub repository.
 4. Set the Root Directory to `backend`.
@@ -109,14 +110,11 @@ npm run dev
 7. **Crucial Step**: Add your `GEMINI_API_KEY` and `GNEWS_API_KEY` in the Environment Variables section on Render.
 
 ### Deploying the Frontend (Vercel)
-1. Import your GitHub repository to [Vercel](https://vercel.com).
+1. Import GitHub repository to [Vercel](https://vercel.com).
 2. Set the Framework Preset to **Vite**.
 3. Set the Root Directory to `frontend`.
-4. **Crucial Step**: Add an Environment Variable named `VITE_API_URL` and set it to your deployed Render backend URL (e.g., `https://your-backend.onrender.com/api/v1`).
+4. **Crucial Step**: Add an Environment Variable named `VITE_API_URL` and set it to your deployed Render backend URL (`https://your-backend.onrender.com/api/v1`).
 5. Click **Deploy**.
 
----
 
-## 📝 License
 
-This project is licensed under the MIT License.
